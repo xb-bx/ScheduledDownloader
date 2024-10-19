@@ -8,11 +8,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia.Collections;
+using Avalonia.Controls;
 using Avalonia.Data;
+using Avalonia.Platform.Storage;
 using DynamicData.Binding;
 using FluentFTP;
 using ReactiveUI;
 using ScheduledDownloader.Models;
+using ScheduledDownloader.Views;
 
 namespace ScheduledDownloader.ViewModels;
 
@@ -20,16 +23,20 @@ public class MainWindowViewModel : ViewModelBase
 {
     private CancellationTokenSource cts = new();
 
+    public MainWindow Window;
     private TimeSpan time = new TimeSpan(12, 00, 00);
     private bool started;
+    private Logger logger = new();
+    private string logPath = "log.txt";
 
     public AvaloniaList<PCConfig> Configs { get; set; } = new();
-    public AvaloniaList<string> Logs { get; set; } = new();
     public ICommand DownloadCommand { get; set; }
     public ICommand AddCommand { get; set; }
+    public ICommand ChooseLogCommand { get; set; }
 
     public bool Started { get => started; set => this.RaiseAndSetIfChanged(ref started, value); }
 
+    public string LogPath { get => logPath; set => this.RaiseAndSetIfChanged(ref logPath, value); }
     public TimeSpan Time
     {
         get => time;
@@ -41,6 +48,7 @@ public class MainWindowViewModel : ViewModelBase
         {
             Configs = Configs.ToArray(),
             Time = Time,
+            LogPath = LogPath,
         };
         File.WriteAllText("config.json", JsonSerializer.Serialize(cfg, new JsonSerializerOptions { IgnoreReadOnlyProperties = true }));
     }
@@ -48,11 +56,13 @@ public class MainWindowViewModel : ViewModelBase
     {
         DownloadCommand = ReactiveCommand.CreateFromTask(Download, this.WhenAnyValue(x => x.Started, x => x == false));
         AddCommand = ReactiveCommand.Create(Add, this.WhenAnyValue(x => x.Started, x => x == false));
+        ChooseLogCommand = ReactiveCommand.Create(ChooseLog, this.WhenAnyValue(x => x.Started, x => x == false));
         if (File.Exists("config.json"))
         {
             var cfg = JsonSerializer.Deserialize<Config>(File.ReadAllText("config.json"));
             Configs = new(cfg!.Configs);
             Time = cfg.Time;
+            LogPath = cfg.LogPath;
         }
         this.Configs.TrackItemPropertyChanged(delegate
         {
@@ -63,6 +73,8 @@ public class MainWindowViewModel : ViewModelBase
             Save();
         };
         this.WhenAnyValue(x => x.Time).Subscribe(_ => Save());
+        logger.Close();
+        logger = new Logger(LogPath);
     }
     public void Add()
     {
@@ -128,36 +140,62 @@ public class MainWindowViewModel : ViewModelBase
             Directory.CreateDirectory(dir);
         }
     }
+    private async Task ChooseLog()
+    {
+        var topLevel = TopLevel.GetTopLevel(Window);
+
+        var files = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Лог",
+            AllowMultiple = false
+        });
+
+        if (files.Count >= 1)
+        {
+            LogPath = Path.Combine(files[0].Path.AbsolutePath, "log.txt");
+            logger.Close();
+            logger = new Logger(LogPath);
+        }
+    }
     private async Task Download(CancellationToken cancellation)
     {
-        Logs.Clear();
         foreach (var pc in Configs.Where(x => x.Enabled))
         {
             if (cancellation.IsCancellationRequested)
             {
-                Logs.Add("Cancelled");
+                logger.Log("Cancelled");
                 throw new OperationCanceledException();
             }
-            Logs.Add($"Started download for {pc.IP}:{pc.Port}");
+            logger.Log($"Started download for {pc.IP}:{pc.Port}");
             try
             {
-                DirEnsureExists(pc.SavePath);
                 var client = new AsyncFtpClient(pc.IP, "admin", "1", pc.Port);
                 await client.Connect();
-                var datepath = DateTime.Now.ToString("yy/MM/dd");
-                var dir = new Uri(new Uri("ftp://notrelevant.shit" + pc.Path + (pc.Path.EndsWith("/") ? "" : "/")), new Uri(datepath, UriKind.Relative));
-                Logs.Add($"Downloading dir {dir.AbsolutePath}");
-                await client.DownloadDirectory(Path.Combine(pc.SavePath, datepath), dir.AbsolutePath, FtpFolderSyncMode.Update, token: cancellation);
-                Logs.Add($"Successfuly downloaded dir {dir.AbsolutePath}");
+                var path = pc.Path.Replace("%YEAR%", DateTime.Now.Year.ToString("0000")).Replace("%MONTH%", DateTime.Now.Month.ToString("00")).Replace("%DAY%", DateTime.Now.Day.ToString("00"));
+                if (await client.DirectoryExists(path))
+                {
+                    var savepath = pc.SavePath.Replace("%YEAR%", DateTime.Now.Year.ToString()).Replace("%MONTH%", DateTime.Now.Month.ToString()).Replace("%DAY%", DateTime.Now.Day.ToString());
+                    logger.Log($"Downloading dir {path}");
+                    await client.DownloadDirectory(savepath, path, FtpFolderSyncMode.Update, token: cancellation);
+                    logger.Log($"Successfuly downloaded dir {path} to {savepath}");
+
+                }
+                else
+                {
+                    var savepath = pc.SavePath + (pc.SavePath.EndsWith("/") ? "" : "/") + path.Substring(path.LastIndexOf("/") + 1);
+                    logger.Log($"Downloading file {path}");
+                    await client.DownloadFile(savepath, path);
+                    logger.Log($"Successfuly downloaded file {path} to {savepath}");
+                }
             }
             catch (OperationCanceledException)
             {
-                Logs.Add("Cancelled");
+                logger.Log("Cancelled");
                 throw;
             }
             catch (Exception e)
             {
-                Logs.Add($"Error {e.ToString()}");
+                logger.Log($"Error {e.ToString()}");
             }
         }
     }

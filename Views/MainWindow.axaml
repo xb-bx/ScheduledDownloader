@@ -12,50 +12,44 @@
     <Design.DataContext>
         <vm:MainWindowViewModel/>
     </Design.DataContext>
-
-    <TabControl>
-        <TabItem Header="Настройки">
-            <Grid RowDefinitions="75*,Auto,Auto">
-                <ScrollViewer Grid.Row="0">
-                    <DataGrid ItemsSource="{Binding Configs}"
-                        IsReadOnly="{Binding Started}" 
-                        GridLinesVisibility="All"
-                        BorderThickness="1" BorderBrush="Gray"
-                        >
-                        <DataGrid.Columns>
-                            <DataGridCheckBoxColumn Header="Включено" Width="Auto" 
-                                Binding="{Binding Enabled}"/>
-                            <DataGridTextColumn Header="IP" Width="*" 
-                                Binding="{Binding IP}"/>
-                            <DataGridTextColumn Header="Port" Width="*" 
-                                Binding="{Binding Port}" />
-                            <DataGridTextColumn Header="Путь на удаленном компьютере" Width="*" 
-                                Binding="{Binding Path}" />
-                            <DataGridTextColumn Header="Путь сохранения" Width="*" 
-                                Binding="{Binding SavePath}" />
-                        </DataGrid.Columns>
-                        
-                    </DataGrid>
-                </ScrollViewer>
-                <StackPanel Grid.Row="1" Orientation="Horizontal">
-                    <Label>Время</Label>
-                    <TimePicker IsEnabled="{Binding !Started}" SelectedTime="{Binding Time}" ClockIdentifier="24HourClock"/>
-                </StackPanel>
-                <StackPanel Grid.Row="2" Orientation="Horizontal">
-                    <Button Content="Добавить" Command="{Binding AddCommand}"/>
-                    <Button Content="Скачать сейчас" Command="{Binding DownloadCommand}"/>
-                    <Panel>
-                        <Button Content="Старт" IsVisible="{Binding !Started}" Command="{Binding Start}"/>
-                        <Button Content="Стоп" IsVisible="{Binding Started}" Command="{Binding Stop}"/>
-                    </Panel>
-                </StackPanel>
-
-            </Grid>
-        </TabItem>
-        <TabItem Header="Лог">
-            <ScrollViewer>
-                <ListBox ItemsSource="{Binding Logs}"/>
+        <Grid RowDefinitions="75*,Auto,Auto,Auto">
+            <ScrollViewer Grid.Row="0">
+                <DataGrid ItemsSource="{Binding Configs}"
+                    IsReadOnly="{Binding Started}" 
+                    GridLinesVisibility="All"
+                    BorderThickness="1" BorderBrush="Gray"
+                    >
+                    <DataGrid.Columns>
+                        <DataGridCheckBoxColumn Header="Включено" Width="Auto" 
+                            Binding="{Binding Enabled}"/>
+                        <DataGridTextColumn Header="IP" Width="*" 
+                            Binding="{Binding IP}"/>
+                        <DataGridTextColumn Header="Port" Width="*" 
+                            Binding="{Binding Port}" />
+                        <DataGridTextColumn Header="Путь на удаленном компьютере" Width="*" 
+                            Binding="{Binding Path}" />
+                        <DataGridTextColumn Header="Путь сохранения" Width="*" 
+                            Binding="{Binding SavePath}" />
+                    </DataGrid.Columns>
+                    
+                </DataGrid>
             </ScrollViewer>
-        </TabItem>
-    </TabControl>
+            <StackPanel Grid.Row="1" Orientation="Horizontal">
+                <Label>Время</Label>
+                <TimePicker IsEnabled="{Binding !Started}" SelectedTime="{Binding Time}" ClockIdentifier="24HourClock"/>
+            </StackPanel>
+            <StackPanel Grid.Row="2" Orientation="Horizontal">
+                <Button Content="Добавить" Command="{Binding AddCommand}"/>
+                <Button Content="Скачать сейчас" Command="{Binding DownloadCommand}"/>
+                <Panel>
+                    <Button Content="Старт" IsVisible="{Binding !Started}" Command="{Binding Start}"/>
+                    <Button Content="Стоп" IsVisible="{Binding Started}" Command="{Binding Stop}"/>
+                </Panel>
+            </StackPanel>
+            <StackPanel Grid.Row="3" Orientation="Horizontal">
+                <Button Content="Выбрать файл" Command="{Binding ChooseLogCommand}"/>
+                <Label Content="{Binding LogPath}"/>
+            </StackPanel>
+
+        </Grid>
 </Window>
