@@ -75,82 +75,82 @@ public class MainWindowViewModel : ViewModelBase
             SavePath = "C:\\Downloads",
         });
     }
-    public void Start() 
+    public void Start()
     {
         Started = true;
         Task.Factory.StartNew(async () => await ScheduledDownload(cts.Token), TaskCreationOptions.LongRunning);
     }
-    public void Stop() 
+    public void Stop()
     {
         cts.Cancel();
         Started = false;
         cts = new();
     }
-    private async Task ScheduledDownload(CancellationToken cancellation) 
+    private async Task ScheduledDownload(CancellationToken cancellation)
     {
-        while(!cancellation.IsCancellationRequested) 
+        while (!cancellation.IsCancellationRequested)
         {
             var now = DateTime.Now;
-            try 
+            try
             {
-                if(now.Hour == Time.Hours && now.Minute == Time.Minutes) 
+                if (now.Hour == Time.Hours && now.Minute == Time.Minutes)
                 {
                     await Download(cancellation);
                 }
-            } 
+                var time = TimeOnly.FromDateTime(now).ToTimeSpan();
+                var diff = Time - time;
+                if (diff.TotalMinutes < 30)
+                {
+                    await Task.Delay(30 * 1000, cancellation);
+                }
+                else
+                {
+                    await Task.Delay(25 * 60 * 1000, cancellation);
+                }
+            }
             catch (OperationCanceledException)
             {
                 return;
             }
-            var time = TimeOnly.FromDateTime(now).ToTimeSpan();
-            var diff = Time - time;
-            if(diff.TotalMinutes < 30) 
-            {
-                await Task.Delay(30 * 1000);
-            } else 
-            {
-                await Task.Delay(25 * 60 * 1000);
-            }
         }
     }
-    private void DirEnsureExists(string dir) 
+    private void DirEnsureExists(string dir)
     {
-        if(Directory.Exists(dir)) 
+        if (Directory.Exists(dir))
         {
             return;
-        } 
-        else 
+        }
+        else
         {
-            var parent = Directory.GetParent(dir); 
-            if(parent != null)
-                DirEnsureExists(parent.FullName);     
+            var parent = Directory.GetParent(dir);
+            if (parent != null)
+                DirEnsureExists(parent.FullName);
             Directory.CreateDirectory(dir);
         }
     }
-    private async Task Download(CancellationToken cancellation) 
+    private async Task Download(CancellationToken cancellation)
     {
         Logs.Clear();
-        foreach(var pc in Configs.Where(x => x.Enabled)) 
+        foreach (var pc in Configs.Where(x => x.Enabled))
         {
-            if(cancellation.IsCancellationRequested) 
+            if (cancellation.IsCancellationRequested)
             {
                 Logs.Add("Cancelled");
                 throw new OperationCanceledException();
             }
             Logs.Add($"Started download for {pc.IP}:{pc.Port}");
-            try 
+            try
             {
                 DirEnsureExists(pc.SavePath);
                 var client = new AsyncFtpClient(pc.IP, "admin", "1", pc.Port);
                 await client.Connect();
                 var datepath = DateTime.Now.ToString("yy/MM/dd");
-                var dir = Path.Combine(pc.Path, datepath);
-
-                Logs.Add($"Downloading dir {dir}");
-                await client.DownloadDirectory(Path.Combine(pc.SavePath, datepath), dir, FtpFolderSyncMode.Update, token: cancellation);
+                var dir = new Uri(new Uri("ftp://notrelevant.shit" + pc.Path + (pc.Path.EndsWith("/") ? "" : "/")), new Uri(datepath, UriKind.Relative));
+                Logs.Add($"Downloading dir {dir.AbsolutePath}");
+                await client.DownloadDirectory(Path.Combine(pc.SavePath, datepath), dir.AbsolutePath, FtpFolderSyncMode.Update, token: cancellation);
                 Logs.Add($"Successfuly downloaded dir {dir}");
             }
-            catch (OperationCanceledException) 
+            catch (OperationCanceledException)
             {
                 Logs.Add("Cancelled");
                 throw;
