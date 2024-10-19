@@ -1,0 +1,29 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="ScheduledDownloader.App"
+             xmlns:local="using:ScheduledDownloader"
+             RequestedThemeVariant="Dark">
+             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+    <TrayIcon.Icons>
+        <TrayIcons>
+          <TrayIcon Icon="/Assets/avalonia-logo.ico" 
+                    ToolTipText="Avalonia Tray Icon ToolTip">
+            <TrayIcon.Menu>
+              <NativeMenu>
+                <NativeMenuItem Header="Открыть"   />
+                <NativeMenuItemSeparator />
+                <NativeMenuItem Header="Завершить"  />
+              </NativeMenu>
+            </TrayIcon.Menu>
+          </TrayIcon>
+        </TrayIcons>
+      </TrayIcon.Icons>
+    <Application.DataTemplates>
+        <local:ViewLocator/>
+    </Application.DataTemplates>
+  
+    <Application.Styles>
+        <FluentTheme />
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
+    </Application.Styles>
+</Application>

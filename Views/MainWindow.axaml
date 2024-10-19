@@ -1,0 +1,61 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:ScheduledDownloader.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="ScheduledDownloader.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="ScheduledDownloader">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+    <TabControl>
+        <TabItem Header="Настройки">
+            <Grid RowDefinitions="75*,Auto,Auto">
+                <ScrollViewer Grid.Row="0">
+                    <DataGrid ItemsSource="{Binding Configs}"
+                        IsReadOnly="{Binding Started}" 
+                        GridLinesVisibility="All"
+                        BorderThickness="1" BorderBrush="Gray"
+                        >
+                        <DataGrid.Columns>
+                            <DataGridCheckBoxColumn Header="Включено" Width="Auto" 
+                                Binding="{Binding Enabled}"/>
+                            <DataGridTextColumn Header="IP" Width="*" 
+                                Binding="{Binding IP}"/>
+                            <DataGridTextColumn Header="Port" Width="*" 
+                                Binding="{Binding Port}" />
+                            <DataGridTextColumn Header="Путь на удаленном компьютере" Width="*" 
+                                Binding="{Binding Path}" />
+                            <DataGridTextColumn Header="Путь сохранения" Width="*" 
+                                Binding="{Binding SavePath}" />
+                        </DataGrid.Columns>
+                        
+                    </DataGrid>
+                </ScrollViewer>
+                <StackPanel Grid.Row="1" Orientation="Horizontal">
+                    <Label>Время</Label>
+                    <TimePicker IsEnabled="{Binding !Started}" SelectedTime="{Binding Time}" ClockIdentifier="24HourClock"/>
+                </StackPanel>
+                <StackPanel Grid.Row="2" Orientation="Horizontal">
+                    <Button Content="Добавить" Command="{Binding AddCommand}"/>
+                    <Button Content="Скачать сейчас" Command="{Binding DownloadCommand}"/>
+                    <Panel>
+                        <Button Content="Старт" IsVisible="{Binding !Started}" Command="{Binding Start}"/>
+                        <Button Content="Стоп" IsVisible="{Binding Started}" Command="{Binding Stop}"/>
+                    </Panel>
+                </StackPanel>
+
+            </Grid>
+        </TabItem>
+        <TabItem Header="Лог">
+            <ScrollViewer>
+                <ListBox ItemsSource="{Binding Logs}"/>
+            </ScrollViewer>
+        </TabItem>
+    </TabControl>
+</Window>
