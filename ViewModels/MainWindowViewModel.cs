@@ -148,7 +148,7 @@ public class MainWindowViewModel : ViewModelBase
                 var dir = new Uri(new Uri("ftp://notrelevant.shit" + pc.Path + (pc.Path.EndsWith("/") ? "" : "/")), new Uri(datepath, UriKind.Relative));
                 Logs.Add($"Downloading dir {dir.AbsolutePath}");
                 await client.DownloadDirectory(Path.Combine(pc.SavePath, datepath), dir.AbsolutePath, FtpFolderSyncMode.Update, token: cancellation);
-                Logs.Add($"Successfuly downloaded dir {dir}");
+                Logs.Add($"Successfuly downloaded dir {dir.AbsolutePath}");
             }
             catch (OperationCanceledException)
             {

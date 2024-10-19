@@ -2,17 +2,19 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="ScheduledDownloader.App"
              xmlns:local="using:ScheduledDownloader"
+             xmlns:vm="using:ScheduledDownloader.ViewModels"
+             x:DataType="vm:ApplicationViewModel"
              RequestedThemeVariant="Dark">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
     <TrayIcon.Icons>
         <TrayIcons>
           <TrayIcon Icon="/Assets/avalonia-logo.ico" 
-                    ToolTipText="Avalonia Tray Icon ToolTip">
+              ToolTipText="Downloader" Command="{Binding Open}">
             <TrayIcon.Menu>
               <NativeMenu>
-                <NativeMenuItem Header="Открыть"   />
-                <NativeMenuItemSeparator />
-                <NativeMenuItem Header="Завершить"  />
+                    <NativeMenuItem Command="{Binding Open}" Header="Открыть"   />
+                    <NativeMenuItemSeparator />
+                    <NativeMenuItem Command="{Binding Quit}" Header="Завершить"  />
               </NativeMenu>
             </TrayIcon.Menu>
           </TrayIcon>

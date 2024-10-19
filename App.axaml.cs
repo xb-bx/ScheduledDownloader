@@ -8,6 +8,11 @@ namespace ScheduledDownloader;
 
 public partial class App : Application
 {
+    private ApplicationViewModel vm = new();
+    public App() 
+    {
+        this.DataContext = vm;
+    }
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -21,8 +26,8 @@ public partial class App : Application
             {
                 DataContext = new MainWindowViewModel(),
             };
+            vm.Window = (MainWindow)desktop.MainWindow;
         }
-
         base.OnFrameworkInitializationCompleted();
     }
 }
